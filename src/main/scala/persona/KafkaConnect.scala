@@ -28,7 +28,7 @@ import jdk.nashorn.internal.parser.JSONParser
 
 object KafkaConnect {
 
-  val logger = Logger(this.getClass)
+  val logger = Logger(KafkaConnect.getClass)
 
   case class SensorReading(uid: String, time: String, event: String)
 
@@ -102,14 +102,15 @@ object KafkaConnect {
         val size: String = properties.getProperty("redis.num")
         //          val index: Int = Math.abs(value.key.hashCode()) % size.toInt
         val index = 0
-        val adress: Array[String] = properties.getProperty(s"redis.address." + index).split(",")
+        val masters: Array[String] = properties.getProperty("redis.address.master").split(",")
+        val servers = properties.getProperty("redis.address.servers").split(",")
         val sentinels: java.util.Set[String] = new java.util.HashSet()
-        sentinels.add(adress(1))
-        sentinels.add(adress(2))
-        sentinels.add(adress(3))
+        sentinels.add(servers(0))
+        sentinels.add(servers(1))
+        sentinels.add(servers(2))
         println(sentinels.size())
         try{
-          pool = new JedisSentinelPool(adress(0), sentinels)
+          pool = new JedisSentinelPool(masters(index), sentinels)
           this.redisCon  = pool.getResource
           if(value.event.equals("RoomJoin")){
             redisCon.hset(RedisKey.OLAPARTY_ROOM_ACTIVE.toString, value.uid, value.time)
